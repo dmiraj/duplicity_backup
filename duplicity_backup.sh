@@ -1,9 +1,12 @@
+#!/bin/bash
 <<Multiline_comment
 In the following I will make a script that I can use to back up my home directory.
 - I want the script to archive my data
 - I want the data transfer to be secure
 - I want the output to be redirected to a file, which I can read to from a terminal widget.
 Multiline_comment
+
+shopt -s extglob
 
 # The following is the function that uses rsync.
 function rsync_use() {
@@ -73,18 +76,21 @@ function configuration () {
 	# Set up symbolic names to configuration files.
 	echo "Setting up symbolic name of 'excluded_files' under ~/.config/"
 	ln --symbolic --force -T $PWD/excluded_files ~/.config/duplicity/excluded_files
+	echo "Setting up symbolic name of 'included_files' under ~/.config"
+	ln --symbolic --force -T $PWD/included_files ~/.config/duplicity/included_files
 }
 
 function dup_backup () {
 	# Interestingly here, I can verify the backup every now and then.
 	# The backup is tarred. (which will occupate less space)
-	duplicity  --ssh-askpass --progress --log-file ~/duplicity_backup-logs --exclude-filelist ~/.config/duplicity/excluded_files --dry-run $HOME scp://k0@berhl.hopto.org:6897/KreAT0r &> /dev/null
+
+	duplicity  --force --ssh-askpass --progress --log-file ~/duplicity_backup-logs --exclude-filelist ~/.config/duplicity/excluded_files --include-filelist ~/.config/duplicity/included_files $HOME scp://k0@berhl.hopto.org:6897/KreAT0r &> /dev/null
 	echo "The function completed";
 }
 
 function check_files () {
 	echo "Trying to connect to backup server in order to check the files"
-	duplicity list-current-files --ssh-askpass scp://k0@berhl.hopto.org:6897/KreAT0r | grep VirtualBox
+	duplicity list-current-files --ssh-askpass scp://k0@berhl.hopto.org:6897/KreAT0r
 }
 
 # Parse arguments passed to the script from the command line.
